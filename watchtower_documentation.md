@@ -89,7 +89,7 @@ To boot the entire stack from scratch, you must start the three discrete systems
 
 **Step 1: Start WatchTower**
 ```powershell
-cd C:/Users/akash/pager/watchtower
+cd %USERPROFILE%/pager/watchtower
 .\venv\Scripts\activate
 python -m uvicorn watchtower.api.main:app --host 0.0.0.0 --port 8888 --reload
 ```
@@ -97,7 +97,7 @@ python -m uvicorn watchtower.api.main:app --host 0.0.0.0 --port 8888 --reload
 
 **Step 2: Start the Main Backend**
 ```powershell
-cd C:/Users/akash/pager/main-project/backend
+cd %USERPROFILE%/pager/main-project/backend
 .\venv\Scripts\activate
 python -m uvicorn backend.server:app --port 8001 --host 0.0.0.0
 ```
@@ -105,7 +105,7 @@ python -m uvicorn backend.server:app --port 8001 --host 0.0.0.0
 
 **Step 3: Start the Main Frontend**
 ```powershell
-cd C:/Users/akash/pager/main-project/frontend
+cd %USERPROFILE%/pager/main-project/frontend
 yarn start
 ```
 *Verification: Open `http://localhost:3000`. The Track My Academy platform should load.*
@@ -128,7 +128,7 @@ WatchTower is currently tracking two endpoints:
 2. **Main Project Frontend** (`http://localhost:3000`) - Pinged every 60 seconds.
 
 - **Configuration:** This lives in `watchtower/config.yaml`. To add a new target, just append it to the `targets` list in that file.
-- **Log Parsing:** The parser tails `C:\Users\akash\pager\main-project\backend\logs\app.log`.
+- **Log Parsing:** The parser tails `%USERPROFILE%\pager\main-project\backend\logs\app.log`.
 - **Frontend SDK:** Captures global `window.onerror`, `unhandledrejection` events, failed `fetch` calls, and optionally `console.error` calls.
 
 ---
@@ -276,7 +276,7 @@ The number indicates how many incidents were resolved.
 
 ## 10. DATABASE
 
-- **Location:** `C:/Users/akash/pager/watchtower/watchtower.db`
+- **Location:** `%USERPROFILE%/pager/watchtower/watchtower.db`
 - **Inspection:** You can open this file using DB Browser for SQLite or any standard SQL client.
 - **Tables:**
   - `monitor_targets`: Cached from config.yaml.
@@ -425,15 +425,15 @@ If you build a new microservice and want to monitor it:
 === WATCHTOWER QUICK REFERENCE ===
 
 START:
-  1. cd C:/Users/akash/pager/watchtower
+    1. cd %USERPROFILE%/pager/watchtower
      venv\Scripts\activate
      python -m uvicorn watchtower.api.main:app --host 0.0.0.0 --port 8888 --reload
 
-  2. cd C:/Users/akash/pager/main-project/backend
+    2. cd %USERPROFILE%/pager/main-project/backend
      venv\Scripts\activate
      python -m uvicorn backend.server:app --port 8001 --host 0.0.0.0
 
-  3. cd C:/Users/akash/pager/main-project/frontend
+    3. cd %USERPROFILE%/pager/main-project/frontend
      yarn start
 
 URLS:
@@ -480,7 +480,7 @@ COOLDOWN:
   30 min between duplicate FAILURE emails (per incident)
   Recovery emails bypass cooldown — always sent immediately
 
-ALERT EMAILS → akashiyu18@gmail.com, akash.krishnan.046@gmail.com
+ALERT EMAILS → you@example.com, team@example.com
 DASHBOARD    → http://localhost:8888/dashboard
 
 RESET (nuclear option — clears all history):
