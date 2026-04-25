@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Status | WatchTower</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #121212;
+            --surface: #1e1e1e;
+            --surface-light: #2c2c2c;
+            --text: #e0e0e0;
+            --text-muted: #a0a0a0;
+            --good: #3fb950;
+            --partial: #d29922;
+            --bad: #f85149;
+            --nodata: #484f58;
+            --border: #30363d;
+        }
+
+        body {
+            font-family: 'Fira Code', monospace;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+        }
+
+        .banner {
+            padding: 20px;
+            border-radius: 6px;
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 40px;
+            text-align: center;
+            border: 1px solid var(--border);
+        }
+
+        .banner.operational { background-color: rgba(63, 185, 80, 0.1); color: var(--good); border-color: rgba(63, 185, 80, 0.4); }
+        .banner.degraded { background-color: rgba(210, 153, 34, 0.1); color: var(--partial); border-color: rgba(210, 153, 34, 0.4); }
+        .banner.outage { background-color: rgba(248, 81, 73, 0.1); color: var(--bad); border-color: rgba(248, 81, 73, 0.4); }
+
+        .service-card {
+            background-color: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .service-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .service-name {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .service-status {
+            font-size: 0.9rem;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+
+        .status-operational { color: var(--good); }
+        .status-degraded { color: var(--partial); }
+        .status-outage { color: var(--bad); }
+
+        .bars-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            height: 40px;
+            gap: 2px;
+            margin-bottom: 10px;
+        }
+
+        .bar {
+            flex-grow: 1;
+            height: 100%;
+            border-radius: 2px;
+            position: relative;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        
+        .bar:hover {
+            opacity: 0.7;
+        }
+
+        .bar.good { background-color: var(--good); }
+        .bar.partial { background-color: var(--partial); }
+        .bar.bad { background-color: var(--bad); }
+        .bar.nodata { 
+            background-color: var(--nodata); 
+            opacity: 0.3;
+        }
+
+        .tooltip {
+            visibility: hidden;
+            background-color: #000;
+            color: #fff;
+            text-align: center;
+            padding: 8px 12px;
+            border-radius: 4px;
+            position: absolute;
+            z-index: 10;
+            bottom: 120%;
+            left: 50%;
+            transform: translateX(-50%);
+            white-space: nowrap;
+            font-size: 0.8rem;
+            border: 1px solid var(--border);
+            opacity: 0;
+            transition: opacity 0.2s;
+            pointer-events: none;
+        }
+
+        .tooltip::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: var(--border) transparent transparent transparent;
+        }
+
+        .bar:hover .tooltip {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .timeline-footer {
+            display: flex;
+            justify-content: space-between;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            margin-top: 5px;
+        }
+
+        .uptime-stats {
+            text-align: right;
+            font-size: 0.8rem;
+        }
+        .uptime-stats span {
+            color: var(--text);
+            font-weight: 600;
+        }
+        .test-disclaimer {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+            font-style: italic;
+        }
+
+        .incidents-section {
+            margin-top: 50px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            background-color: var(--surface);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            background-color: var(--surface-light);
+            color: var(--text-muted);
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        .badge.open { background-color: rgba(248, 81, 73, 0.2); color: var(--bad); }
+        .badge.resolved { background-color: rgba(63, 185, 80, 0.2); color: var(--good); }
+
+        .footer {
+            margin-top: 50px;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+        }
+
+        a { color: var(--text-muted); text-decoration: none; }
+        a:hover { color: var(--text); }
+        
+        .nav-link {
+            margin-bottom: 20px;
+            align-self: flex-start;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="nav-link">
+            <a href="/dashboard">← Back to Dashboard</a>
+        </div>
+
+        <div id="banner-container">
+            <!-- Banner injected via JS -->
+            <div class="banner" style="border-color: transparent;">Loading status...</div>
+        </div>
+
+        <div id="services-container">
+            <!-- Services injected via JS -->
+        </div>
+
+        <div class="incidents-section">
+            <h2>Recent Incidents</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Status</th>
+                        <th>Incident</th>
+                        <th>Duration</th>
+                        <th>Timeline</th>
+                    </tr>
+                </thead>
+                <tbody id="incidents-tbody">
+                    <!-- Incidents injected via JS -->
+                </tbody>
+            </table>
+        </div>
+
+        <div class="footer">
+            <p>Last updated: <span id="last-updated">--</span></p>
+            <p>Powered by WatchTower</p>
+        </div>
+    </div>
+
+    <script>
+        async function fetchStatusData() {
+            try {
+                const response = await fetch('/status/data');
+                const data = await response.json();
+                renderPage(data);
+            } catch (error) {
+                console.error("Failed to load status data", error);
+                document.getElementById("banner-container").innerHTML = `
+                    <div class="banner outage">✕ Error loading status data</div>
+                `;
+            }
+        }
+
+        function renderPage(data) {
+            // Update Banner
+            const bannerContainer = document.getElementById("banner-container");
+            if (data.overall_status === "operational") {
+                bannerContainer.innerHTML = `<div class="banner operational">● All Systems Operational</div>`;
+            } else if (data.overall_status === "degraded") {
+                bannerContainer.innerHTML = `<div class="banner degraded">⚠ Degraded Performance</div>`;
+            } else {
+                bannerContainer.innerHTML = `<div class="banner outage">✕ Major Outage</div>`;
+            }
+
+            // Render Services
+            const servicesContainer = document.getElementById("services-container");
+            servicesContainer.innerHTML = "";
+            
+            data.services.forEach(service => {
+                const card = document.createElement("div");
+                card.className = "service-card";
+                
+                let statusLabel = "Operational";
+                if (service.current_status === "degraded") statusLabel = "Degraded";
+                if (service.current_status === "outage") statusLabel = "Outage";
+                if (service.current_status === "unknown") statusLabel = "Unknown";
+                
+                let barsHtml = "";
+                service.daily_bars.forEach(bar => {
+                    let tooltipText = "";
+                    if (bar.status === "nodata") tooltipText = `${bar.date}: No data recorded`;
+                    else if (bar.status === "good") tooltipText = `${bar.date}: No downtime recorded`;
+                    else tooltipText = `${bar.date}: ${bar.outage_count} outage events, ~${bar.downtime_minutes} minutes downtime`;
+
+                    barsHtml += `
+                        <div class="bar ${bar.status}">
+                            <div class="tooltip">${tooltipText}</div>
+                        </div>
+                    `;
+                });
+
+                card.innerHTML = `
+                    <div class="service-header">
+                        <div class="service-name">${service.name}</div>
+                        <div class="service-status status-${service.current_status}">${statusLabel}</div>
+                    </div>
+                    <div class="bars-container">
+                        ${barsHtml}
+                    </div>
+                    <div class="timeline-footer">
+                        <span>90 days ago</span>
+                        <span>Today</span>
+                    </div>
+                    <div class="uptime-stats">
+                        <div><span>${service.uptime_percentage_7d}%</span> last 7 days &nbsp;|&nbsp; <span>${service.uptime_percentage_90d}%</span> last 90 days</div>
+                        <div class="test-disclaimer">* Includes test downtime from initial setup</div>
+                    </div>
+                `;
+                servicesContainer.appendChild(card);
+            });
+
+            // Date parsing for monitoring_started_at
+            let monitoringDateStr = "Unknown";
+            if (data.monitoring_started_at) {
+                const md = new Date(data.monitoring_started_at);
+                monitoringDateStr = md.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+            }
+            
+            // Append monitoring started note below services
+            const monitorInfo = document.createElement("div");
+            monitorInfo.style.textAlign = "center";
+            monitorInfo.style.color = "var(--text-muted)";
+            monitorInfo.style.fontSize = "0.8rem";
+            monitorInfo.style.marginBottom = "20px";
+            monitorInfo.textContent = `Monitoring started: ${monitoringDateStr}`;
+            servicesContainer.appendChild(monitorInfo);
+
+            // Render Incidents
+            const tbody = document.getElementById("incidents-tbody");
+            tbody.innerHTML = "";
+            
+            if (data.incidents.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align: center;">No incidents in the last 90 days.</td></tr>`;
+            } else {
+                data.incidents.forEach(inc => {
+                    const tr = document.createElement("tr");
+                    tr.innerHTML = `
+                        <td><span class="badge ${inc.state.toLowerCase()}">${inc.state}</span></td>
+                        <td>${inc.title} <br><small style="color: var(--text-muted);">${inc.source_type}</small></td>
+                        <td>${inc.duration_minutes}</td>
+                        <td style="font-size: 0.85rem;">
+                            ${inc.first_seen} <br>
+                            to ${inc.resolved_at}
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+
+            // Update footer time
+            const d = new Date(data.generated_at);
+            document.getElementById("last-updated").textContent = d.toLocaleString();
+        }
+
+        // Initial load
+        fetchStatusData();
+        
+        // Auto-refresh every 60s
+        setInterval(fetchStatusData, 60000);
+    </script>
+</body>
+</html>

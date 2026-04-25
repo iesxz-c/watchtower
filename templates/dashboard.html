@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WatchTower Dashboard</title>
+    <style>
+        :root {
+            --bg: #121212;
+            --surface: #1e1e1e;
+            --text: #e0e0e0;
+            --primary: #bb86fc;
+            --success: #03dac6;
+            --error: #cf6679;
+            --warning: #ffb74d;
+        }
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: 'SF Mono', Consolas, 'Liberation Mono', Menlo, monospace;
+            margin: 0;
+            padding: 20px;
+        }
+        h1, h2, h3 { color: #ffffff; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+        .card { background-color: var(--surface); padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #333; }
+        th { color: #888; font-weight: normal; text-transform: uppercase; font-size: 0.8rem; }
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; }
+        .up, .resolved { background-color: rgba(3, 218, 198, 0.2); color: var(--success); }
+        .down, .open { background-color: rgba(207, 102, 121, 0.2); color: var(--error); }
+        .stat-value { font-size: 2.5rem; font-weight: bold; color: var(--primary); }
+    </style>
+    <script>
+        setTimeout(() => location.reload(), 30000);
+    </script>
+</head>
+<body>
+    <div style="display: flex; justify-content: space-between; align-items: baseline;">
+        <h1>🔭 WatchTower</h1>
+        <a href="/status" style="color: var(--primary); text-decoration: none; font-weight: bold;">Status Page →</a>
+    </div>
+    
+    <div class="grid">
+        <div class="card">
+            <h2>Targets Status</h2>
+            <table>
+                <thead>
+                    <tr><th>Name</th><th>URL</th><th>Status</th><th>Last Checked</th></tr>
+                </thead>
+                <tbody>
+                    {% for target in targets %}
+                    <tr>
+                        <td>{{ target.name }}</td>
+                        <td>{{ target.url }}</td>
+                        <td><span class="badge {% if target_status_dict[target.id] == 'UP' %}up{% elif target_status_dict[target.id] == 'DOWN' %}down{% else %}warning{% endif %}">{{ target_status_dict[target.id] }}</span></td>
+                        <td>
+                            {% if last_checked_dict[target.id] %}
+                                {{ last_checked_dict[target.id].strftime('%Y-%m-%d %H:%M:%S') }}
+                            {% else %}
+                                Never
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    {% if not targets %}
+                    <tr><td colspan="4">No targets configured.</td></tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="card">
+            <h2>System Stats</h2>
+            <p>Frontend Events (Last 1hr): <span class="stat-value" style="font-size:1.5rem;">{{ frontend_events_count }}</span></p>
+            <p>Backend Errors (Last 1hr): <span class="stat-value" style="font-size:1.5rem;">{{ backend_events_count }}</span></p>
+            <p>Open Incidents: <span class="stat-value" style="font-size:1.5rem;">{{ open_incidents_count }}</span></p>
+            <p>Resolved Today: <span class="stat-value" style="font-size:1.5rem;">{{ resolved_today_count }}</span></p>
+            <p>Alerts Sent Today: <span class="stat-value" style="font-size:1.5rem;">{{ alerts_sent_today }}</span></p>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>Recent Incidents</h2>
+        <table>
+            <thead>
+                <tr><th>State</th><th>Title</th><th>Source</th><th>First Seen</th><th>Last Seen</th></tr>
+            </thead>
+            <tbody>
+                {% for inc in incidents %}
+                <tr>
+                    <td><span class="badge {{ inc.state.lower() }}">{{ inc.state }}</span></td>
+                    <td>{{ inc.title }}</td>
+                    <td>{{ inc.source_type }}</td>
+                    <td>{{ inc.first_seen.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                    <td>{{ inc.last_seen.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                </tr>
+                {% endfor %}
+                {% if not incidents %}
+                <tr><td colspan="5">All clear! No incidents recorded.</td></tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+    <div class="card" style="margin-top: 20px;">
+        <h2>Recent Alert Deliveries</h2>
+        <table>
+            <thead>
+                <tr><th>Sent At</th><th>Alert Type</th><th>Incident Title</th><th>Success</th></tr>
+            </thead>
+            <tbody>
+                {% for delivery in deliveries %}
+                <tr>
+                    <td>{{ delivery.sent_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                    <td><span class="badge {{ delivery.alert_type.lower() }}">{{ delivery.alert_type }}</span></td>
+                    <td>{{ delivery.incident.title }}</td>
+                    <td>
+                        {% if delivery.success %}
+                        <span style="color: var(--success);">Yes</span>
+                        {% else %}
+                        <span style="color: var(--error);">No</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+                {% if not deliveries %}
+                <tr><td colspan="4">No alert deliveries recorded yet.</td></tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

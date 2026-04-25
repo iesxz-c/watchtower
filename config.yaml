@@ -1,0 +1,39 @@
+monitoring:
+  targets:
+    - name: "Main Project Backend"
+      url: "http://localhost:8001/health"
+      method: GET
+      expected_status: 200
+      timeout_s: 10
+      interval_s: 60
+      enabled: true
+
+    - name: "Main Project Frontend"
+      url: "http://localhost:3000"
+      method: GET
+      expected_status: 200
+      timeout_s: 10
+      interval_s: 60
+      enabled: true
+
+log_sources:
+  - path: "C:/Users/akash/pager/main-project/backend/logs/app.log"
+    service_name: "main-project-backend"
+    error_threshold: 3
+    window_minutes: 5
+
+frontend:
+  error_threshold: 10         # events in window
+  window_minutes: 5
+  cooldown_minutes: 30
+
+alerts:
+  email: "akashiyu18@gmail.com, akash.krishnan.046@gmail.com"
+  cooldown_minutes: 30
+
+smtp:
+  host: "${SMTP_HOST}"
+  port: 587
+  user: "${SMTP_USER}"
+  password: "${SMTP_PASS}"
+  from: "WatchTower Alerts <alerts@watchtower.dev>"
