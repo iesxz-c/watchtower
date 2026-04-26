@@ -36,6 +36,8 @@ htmlcov/
 *.db
 *.sqlite3
 
+
+
 # IDE / editor
 .vscode/
 .idea/
